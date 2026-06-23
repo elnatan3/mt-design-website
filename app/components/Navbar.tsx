@@ -9,8 +9,10 @@ export default function Navbar() {
     ["Collections", "/collections"],
     ["Custom Order", "/custom-order"],
     ["Gallery", "/gallery"],
+    ["Shipping", "/shipping"],
     ["About", "/about"],
     ["Contact", "/contact"],
+    ["Admin", "/admin"],
   ];
 
   return (

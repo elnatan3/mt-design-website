@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { supabase } from "../lib/supabase";
 
 const standardSizes = ["XS", "S", "M", "L", "XL", "Custom"];
 const styles = ["V-Neck", "Low Back", "Tube Dress", "Round Neck", "Cape", "Modern", "Traditional"];
@@ -14,6 +15,8 @@ export default function CustomOrderPage() {
   const [style, setStyle] = useState("V-Neck");
   const [tibeb, setTibeb] = useState("Hand Tibeb");
   const [color, setColor] = useState("Gold");
+  const [file, setFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -37,13 +40,11 @@ export default function CustomOrderPage() {
     return encodeURIComponent(
       `Hello MT Design, I want to place a custom order.
 
-Customer Details:
 Name: ${form.name}
 Phone: ${form.phone}
 WhatsApp: ${form.whatsapp}
 Location: ${form.location}
 
-Design:
 Size: ${size}
 Style: ${style}
 Tibeb Type: ${tibeb}
@@ -64,16 +65,72 @@ ${form.inquiry}`
     );
   }, [form, size, style, tibeb, color]);
 
+  async function submitOrder(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+
+    let inspirationUrl = "";
+
+    if (file) {
+      const path = `orders/${Date.now()}-${file.name}`;
+
+      const { error } = await supabase.storage
+        .from("mt-images")
+        .upload(path, file);
+
+      if (error) {
+        alert(error.message);
+        setSubmitting(false);
+        return;
+      }
+
+      const { data } = supabase.storage.from("mt-images").getPublicUrl(path);
+      inspirationUrl = data.publicUrl;
+    }
+
+    const { error } = await supabase.from("custom_orders").insert({
+      name: form.name,
+      phone: form.phone,
+      whatsapp: form.whatsapp,
+      location: form.location,
+      size,
+      style,
+      tibeb,
+      color,
+      measurements: {
+        bust: form.bust,
+        waist: form.waist,
+        hip: form.hip,
+        shoulder: form.shoulder,
+        dressLength: form.dressLength,
+      },
+      details: form.details,
+      inquiry: form.inquiry,
+      inspiration_url: inspirationUrl,
+      status: "New",
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Order submitted successfully. WhatsApp will open next.");
+    window.location.href = `https://wa.me/+251911202230?text=${whatsappText}`;
+  }
+
   return (
     <main className="min-h-screen bg-[#04142c] text-white">
       <Navbar />
 
       <section className="px-4 py-10 sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-6xl">
+        <form onSubmit={submitOrder} className="mx-auto max-w-6xl">
           <h1 className="text-4xl font-black sm:text-6xl">Custom Order</h1>
+
           <p className="mt-4 max-w-2xl text-blue-100">
-            Choose your size, style, Tibeb type, color, measurements,
-            inspiration image, and personal details.
+            Submit your custom MT Design order. Your order will be saved for admin review.
           </p>
 
           <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[0.9fr_1.1fr]">
@@ -82,7 +139,7 @@ ${form.inquiry}`
                 Design Preview
               </h2>
 
-              <div className="mt-6 flex min-h-[360px] items-center justify-center rounded-3xl bg-[#d9d0bf] p-4 text-[#04142c] sm:min-h-[500px] sm:p-6">
+              <div className="mt-6 flex min-h-[360px] items-center justify-center rounded-3xl bg-[#d9d0bf] p-4 text-[#04142c] sm:min-h-[500px]">
                 <div className="text-center">
                   <div className="text-7xl">👗</div>
                   <p className="mt-6 text-2xl font-black">{style}</p>
@@ -105,9 +162,11 @@ ${form.inquiry}`
                 <h3 className="mb-4 font-bold uppercase tracking-wider text-[#f5c542]">
                   Upload Inspiration Image
                 </h3>
+
                 <input
                   type="file"
                   accept="image/*"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 p-4 text-sm"
                 />
               </div>
@@ -123,6 +182,7 @@ ${form.inquiry}`
                 <h3 className="mb-4 font-bold uppercase tracking-wider text-[#f5c542]">
                   Custom Measurements
                 </h3>
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Input label="Bust" value={form.bust} onChange={(v) => updateField("bust", v)} />
                   <Input label="Waist" value={form.waist} onChange={(v) => updateField("waist", v)} />
@@ -136,7 +196,7 @@ ${form.inquiry}`
                 label="Design Details"
                 value={form.details}
                 onChange={(v) => updateField("details", v)}
-                placeholder="Example: I want a V-neck dress, gold Tibeb, long sleeves, low back..."
+                placeholder="Example: I want gold Tibeb, long sleeves, low back, and elegant wedding style..."
               />
 
               <TextArea
@@ -146,15 +206,15 @@ ${form.inquiry}`
                 placeholder="Ask about price, shipping, timing, wedding date, or anything else..."
               />
 
-              <a
-                href={`https://wa.me/YOURNUMBER?text=${whatsappText}`}
-                className="mt-8 block rounded-full bg-[#f5c542] px-8 py-4 text-center font-bold text-[#04142c]"
+              <button
+                disabled={submitting}
+                className="mt-8 block w-full rounded-full bg-[#f5c542] px-8 py-4 text-center font-bold text-[#04142c] disabled:opacity-60"
               >
-                Send Custom Order to WhatsApp
-              </a>
+                {submitting ? "Submitting..." : "Submit Order + Open WhatsApp"}
+              </button>
             </section>
           </div>
-        </div>
+        </form>
       </section>
 
       <Footer />
@@ -178,6 +238,7 @@ function OptionGroup({
       <h3 className="mb-3 font-bold uppercase tracking-wider text-[#f5c542]">
         {title}
       </h3>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
         {items.map((item) => (
           <button
@@ -198,10 +259,20 @@ function OptionGroup({
   );
 }
 
-function Input({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-bold text-[#f5c542]">{label}</span>
+      <span className="mb-2 block text-sm font-bold text-[#f5c542]">
+        {label}
+      </span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -224,7 +295,9 @@ function TextArea({
 }) {
   return (
     <label className="mt-8 block">
-      <span className="mb-2 block text-sm font-bold text-[#f5c542]">{label}</span>
+      <span className="mb-2 block text-sm font-bold text-[#f5c542]">
+        {label}
+      </span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
