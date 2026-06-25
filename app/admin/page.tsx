@@ -80,8 +80,7 @@ export default function AdminPage() {
   }
 
   async function deleteProduct(id: string) {
-    const confirmDelete = confirm("Delete this product?");
-    if (!confirmDelete) return;
+    if (!confirm("Delete this product?")) return;
 
     const { error } = await supabase.from("products").delete().eq("id", id);
 
@@ -95,8 +94,7 @@ export default function AdminPage() {
   }
 
   async function deleteGallery(id: string) {
-    const confirmDelete = confirm("Delete this gallery photo?");
-    if (!confirmDelete) return;
+    if (!confirm("Delete this gallery photo?")) return;
 
     const { error } = await supabase.from("gallery").delete().eq("id", id);
 
@@ -324,7 +322,6 @@ export default function AdminPage() {
                     <h3 className="text-xl font-bold">{order.name}</h3>
 
                     <p className="text-blue-100">Phone: {order.phone}</p>
-                    <p className="text-blue-100">WhatsApp: {order.whatsapp}</p>
                     <p className="text-blue-100">Location: {order.location}</p>
 
                     <p className="mt-2 text-blue-100">
@@ -332,12 +329,41 @@ export default function AdminPage() {
                       {order.color}
                     </p>
 
-                    <p className="mt-2 text-sm text-blue-100">
-                      {order.details}
+                    <div className="mt-4 rounded-2xl bg-[#04142c] p-4">
+                      <p className="font-bold text-[#f5c542]">
+                        Measurements
+                      </p>
+                      <p className="mt-2 text-sm text-blue-100">
+                        Bust: {order.measurements?.bust || "Not provided"} cm
+                      </p>
+                      <p className="text-sm text-blue-100">
+                        Waist: {order.measurements?.waist || "Not provided"} cm
+                      </p>
+                      <p className="text-sm text-blue-100">
+                        Hip: {order.measurements?.hip || "Not provided"} cm
+                      </p>
+                      <p className="text-sm text-blue-100">
+                        Shoulder:{" "}
+                        {order.measurements?.shoulder || "Not provided"} cm
+                      </p>
+                      <p className="text-sm text-blue-100">
+                        Dress Length:{" "}
+                        {order.measurements?.dressLength || "Not provided"} cm
+                      </p>
+                    </div>
+
+                    <p className="mt-4 text-sm text-blue-100">
+                      <span className="font-bold text-[#f5c542]">
+                        Details:
+                      </span>{" "}
+                      {order.details || "No details provided"}
                     </p>
 
                     <p className="mt-2 text-sm text-blue-100">
-                      Inquiry: {order.inquiry}
+                      <span className="font-bold text-[#f5c542]">
+                        Inquiry:
+                      </span>{" "}
+                      {order.inquiry || "No inquiry provided"}
                     </p>
 
                     {order.inspiration_url && (
@@ -365,14 +391,38 @@ export default function AdminPage() {
                       <option>Delivered</option>
                     </select>
 
-                    {order.whatsapp && (
-                      <a
-                        href={`https://wa.me/${order.whatsapp}`}
-                        className="mt-4 block rounded-full bg-[#f5c542] px-5 py-3 text-center font-bold text-[#04142c]"
-                      >
-                        Message Customer
-                      </a>
+                    {order.phone && (
+                      <div className="mt-4 rounded-2xl bg-[#04142c] p-4">
+                        <p className="text-sm font-bold text-[#f5c542]">
+                          Customer Contact
+                        </p>
+                        <p className="mt-2 text-blue-100">{order.phone}</p>
+                      </div>
                     )}
+
+                    <a
+                      href={`mailto:mtsupport@mtethiodesign.com?subject=${encodeURIComponent(
+                        `Follow up: MT Design Order - ${order.name}`
+                      )}&body=${encodeURIComponent(
+                        `Hello ${order.name},
+
+Thank you for your custom order request with MT Design.
+
+We are reviewing your design details and will contact you shortly.
+
+Order Details:
+Style: ${order.style}
+Size: ${order.size}
+Tibeb: ${order.tibeb}
+Color: ${order.color}
+
+Best,
+MT Design`
+                      )}`}
+                      className="mt-4 block rounded-full bg-[#f5c542] px-5 py-3 text-center font-bold text-[#04142c]"
+                    >
+                      Draft Email Reply
+                    </a>
                   </div>
                 </div>
               </div>
@@ -554,11 +604,8 @@ function AddProduct({ onDone }: { onDone: () => void }) {
             const selected = e.target.files?.[0] || null;
             setFile(selected);
 
-            if (selected) {
-              setPreview(URL.createObjectURL(selected));
-            } else {
-              setPreview("");
-            }
+            if (selected) setPreview(URL.createObjectURL(selected));
+            else setPreview("");
           }}
           className="w-full rounded-xl border border-white/20 bg-white/10 p-3"
         />
@@ -696,11 +743,8 @@ function AddGallery({ onDone }: { onDone: () => void }) {
             const selected = e.target.files?.[0] || null;
             setFile(selected);
 
-            if (selected) {
-              setPreview(URL.createObjectURL(selected));
-            } else {
-              setPreview("");
-            }
+            if (selected) setPreview(URL.createObjectURL(selected));
+            else setPreview("");
           }}
           className="w-full rounded-xl border border-white/20 bg-white/10 p-3"
         />

@@ -33,8 +33,19 @@ export default function GalleryPage() {
       .order("created_at", { ascending: false });
 
     if (!error) setGallery(data || []);
-
     setLoading(false);
+  }
+
+  function inspirationLink(item: GalleryItem) {
+    const params = new URLSearchParams({
+      inspirationId: item.id,
+      inspirationTitle: item.title || "",
+      inspirationCategory: item.category || "",
+      inspirationColor: item.color || "",
+      inspirationUrl: item.image_url || "",
+    });
+
+    return `/custom-order?${params.toString()}`;
   }
 
   const categories = [
@@ -72,8 +83,8 @@ export default function GalleryPage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-blue-100">
-            Browse real MT Design photos. Click any image to view it larger
-            without cropping.
+            Browse real MT Design photos. Click any image to view it larger, or
+            use it as inspiration for a custom order.
           </p>
 
           <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -108,19 +119,23 @@ export default function GalleryPage() {
             <>
               <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.map((item) => (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
-                    onClick={() => setSelected(item)}
-                    className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 text-left transition hover:-translate-y-1 hover:border-[#f5c542]/60"
+                    className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-[#f5c542]/60"
                   >
-                    <div className="flex h-[360px] items-center justify-center bg-[#d9d0bf] p-3 sm:h-[420px]">
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="max-h-full max-w-full rounded-2xl object-contain transition duration-500 group-hover:scale-[1.03]"
-                      />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(item)}
+                      className="block w-full text-left"
+                    >
+                      <div className="flex h-[360px] items-center justify-center bg-[#d9d0bf] p-3 sm:h-[420px]">
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="max-h-full max-w-full rounded-2xl object-contain transition duration-500 group-hover:scale-[1.03]"
+                        />
+                      </div>
+                    </button>
 
                     <div className="p-5">
                       <h2 className="text-xl font-black text-white">
@@ -129,11 +144,25 @@ export default function GalleryPage() {
                       <p className="mt-2 text-sm text-blue-100">
                         {item.category} • {item.color}
                       </p>
-                      <p className="mt-4 text-sm font-bold text-[#f5c542]">
-                        Click to zoom →
-                      </p>
+
+                      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                        <button
+                          type="button"
+                          onClick={() => setSelected(item)}
+                          className="rounded-full border border-[#f5c542] px-5 py-3 text-center text-sm font-bold text-[#f5c542]"
+                        >
+                          Zoom
+                        </button>
+
+                        <a
+                          href={inspirationLink(item)}
+                          className="rounded-full bg-[#f5c542] px-5 py-3 text-center text-sm font-bold text-[#04142c]"
+                        >
+                          Use This to Customize
+                        </a>
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
 
@@ -164,25 +193,25 @@ export default function GalleryPage() {
               ✕
             </button>
 
-            <div className="flex max-h-[78vh] items-center justify-center">
+            <div className="flex max-h-[70vh] items-center justify-center">
               <img
                 src={selected.image_url}
                 alt={selected.title}
-                className="max-h-[78vh] max-w-full rounded-2xl object-contain"
+                className="max-h-[70vh] max-w-full rounded-2xl object-contain"
               />
             </div>
 
-            <div className="mt-4 rounded-2xl bg-white/60 p-4">
+            <div className="mt-4 rounded-2xl bg-white/70 p-4">
               <h2 className="text-2xl font-black">{selected.title}</h2>
               <p>
                 {selected.category} • {selected.color}
               </p>
 
               <a
-                href="/custom-order"
+                href={inspirationLink(selected)}
                 className="mt-5 inline-block rounded-full bg-[#04142c] px-8 py-4 font-bold text-[#f5c542]"
               >
-                Request Similar Design
+                Use This to Customize Order
               </a>
             </div>
           </div>
