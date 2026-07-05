@@ -10,6 +10,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/dev-access") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/login") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon");
 

@@ -35,25 +35,40 @@ export default function AdminPage() {
 
   async function checkUser() {
     setLoading(true);
-
+  
     const { data } = await supabase.auth.getUser();
-
+  
     if (!data.user) {
       window.location.href = "/login";
       return;
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
-
-    if (profile?.role !== "admin") {
+  
+    const email = data.user.email?.toLowerCase().trim() || "";
+  
+    const adminEmails = [
+      "elnatantesfa21@gmail.com",
+    ];
+  
+    const isAdmin = adminEmails.includes(email);
+  
+    if (!isAdmin) {
       window.location.href = "/dashboard";
       return;
     }
-
+  
+    await supabase.from("profiles").upsert(
+      {
+        id: data.user.id,
+        email,
+        full_name:
+          data.user.user_metadata?.full_name ||
+          data.user.user_metadata?.name ||
+          "",
+        role: "admin",
+      },
+      { onConflict: "id" }
+    );
+  
     setUser(data.user);
     await loadData();
     setLoading(false);
