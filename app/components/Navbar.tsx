@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   const links = [
     ["Collections", "/collections"],
@@ -12,8 +14,16 @@ export default function Navbar() {
     ["Shipping", "/shipping"],
     ["About", "/about"],
     ["Contact", "/contact"],
-    ["Admin", "/admin"],
   ];
+
+  useEffect(() => {
+    async function checkSession() {
+      const { data } = await supabase.auth.getSession();
+      setLoggedIn(!!data.session);
+    }
+
+    checkSession();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#04142c]/95 backdrop-blur">
@@ -35,12 +45,21 @@ export default function Navbar() {
           ))}
         </div>
 
-        <a
-          href="/custom-order"
-          className="hidden rounded-full bg-[#f5c542] px-5 py-3 text-sm font-bold text-[#04142c] lg:block"
-        >
-          Order Now
-        </a>
+        <div className="hidden items-center gap-3 lg:flex">
+          <a
+            href="/custom-order"
+            className="rounded-full bg-[#f5c542] px-5 py-3 text-sm font-bold text-[#04142c]"
+          >
+            Custom Order
+          </a>
+
+          <a
+            href={loggedIn ? "/dashboard" : "/login"}
+            className="rounded-full border border-[#f5c542] px-5 py-3 text-sm font-bold text-[#f5c542]"
+          >
+            {loggedIn ? "Dashboard" : "Login"}
+          </a>
+        </div>
 
         <button
           onClick={() => setOpen(!open)}
@@ -62,11 +81,19 @@ export default function Navbar() {
                 {label}
               </a>
             ))}
+
             <a
               href="/custom-order"
               className="rounded-xl bg-[#f5c542] px-4 py-3 text-center font-bold text-[#04142c]"
             >
-              Order Now
+              Custom Order
+            </a>
+
+            <a
+              href={loggedIn ? "/dashboard" : "/login"}
+              className="rounded-xl border border-[#f5c542] px-4 py-3 text-center font-bold text-[#f5c542]"
+            >
+              {loggedIn ? "Dashboard" : "Login"}
             </a>
           </div>
         </div>

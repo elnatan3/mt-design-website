@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEV_CODE = process.env.DEV_ACCESS_CODE;
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const hasAccess = request.cookies.get("dev_access")?.value === "true";
+  const hasDevAccess = request.cookies.get("dev_access")?.value === "true";
 
-  if (
+  const allowedPaths =
     pathname.startsWith("/coming-soon") ||
     pathname.startsWith("/api/dev-access") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/login") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
-  ) {
+    pathname.startsWith("/favicon");
+
+  if (allowedPaths) {
     return NextResponse.next();
   }
 
-  if (!hasAccess) {
+  if (!hasDevAccess) {
     return NextResponse.redirect(new URL("/coming-soon", request.url));
   }
 
@@ -24,5 +25,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

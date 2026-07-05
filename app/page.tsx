@@ -1,7 +1,5 @@
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import ProductCard from "./components/ProductCard";
-import { products } from "./data/products";
 
 export default function Home() {
   return (
@@ -14,32 +12,43 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#f5c542] sm:text-sm sm:tracking-[0.35em]">
-              Ethiopian Tradition • Modern Luxury
+              Ethiopian Heritage • Modern Luxury • Worldwide Orders
             </p>
 
-            <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl md:text-7xl">
-              Custom Habesha Fashion for everyone
+            <h1 className="mt-6 text-5xl font-black leading-tight sm:text-6xl md:text-8xl">
+              <span className="text-[#f5c542] drop-shadow-[0_0_25px_rgba(245,197,66,0.35)]">
+                MT Design
+              </span>
+              <br />
+              Custom Habesha Fashion
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-8 text-blue-100 sm:text-lg">
-              MT Design creates elegant Ethiopian traditional clothing for
-              weddings, graduations, cultural celebrations, ready-made pieces,
-              and custom diaspora orders.
+              Founded in 1997 by Mesfin Tesfa, MT Design is a proud
+              family-owned Ethiopian fashion business with nearly 30 years of
+              experience creating elegant clothing for weddings, graduations,
+              church programs, cultural celebrations, and special occasions.
+            </p>
+
+            <p className="mt-4 max-w-2xl text-base leading-8 text-blue-100 sm:text-lg">
+              Based in Bole, Addis Ababa, we combine timeless Ethiopian
+              craftsmanship with modern style and offer worldwide orders for
+              customers across the globe.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <a
-                href="/collections"
-                className="rounded-full bg-[#f5c542] px-8 py-4 text-center font-bold text-[#04142c]"
+                href="/custom-order"
+                className="rounded-full bg-[#f5c542] px-8 py-4 text-center font-bold text-[#04142c] shadow-[0_0_30px_rgba(245,197,66,0.25)] transition hover:-translate-y-1 hover:shadow-[0_0_45px_rgba(245,197,66,0.45)]"
               >
-                Shop Ready-Made
+                Start Custom Order
               </a>
 
               <a
-                href="/custom-order"
-                className="rounded-full border border-[#f5c542] px-8 py-4 text-center font-bold text-[#f5c542]"
+                href="/about"
+                className="rounded-full border border-[#f5c542] px-8 py-4 text-center font-bold text-[#f5c542] transition hover:bg-[#f5c542] hover:text-[#04142c]"
               >
-                Start Custom Order
+                Learn About MT Design
               </a>
             </div>
           </div>
@@ -54,37 +63,16 @@ export default function Home() {
 
       <section className="border-y border-white/10 bg-[#08254f] px-4 py-6 sm:px-6">
         <div className="mx-auto grid max-w-7xl gap-4 text-center sm:grid-cols-2 lg:grid-cols-4">
-          {["Ready-Made", "Custom Orders", "Handcrafted", "Diaspora Friendly"].map(
-            (item) => (
-              <div key={item} className="font-bold text-[#f5c542]">
-                ✦ {item}
-              </div>
-            )
-          )}
-        </div>
-      </section>
-
-      <section className="px-4 py-14 sm:px-6 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
-            Ready-Made
-          </p>
-          <h2 className="mt-4 text-4xl font-black">Featured Pieces</h2>
-
-          <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <a
-              href="/collections"
-              className="rounded-full bg-[#f5c542] px-8 py-4 font-bold text-[#04142c]"
-            >
-              View All Collections
-            </a>
-          </div>
+          {[
+            "30 Years Experience",
+            "Custom Orders",
+            "Handcrafted",
+            "Worldwide Orders",
+          ].map((item) => (
+            <div key={item} className="font-bold text-[#f5c542]">
+              ✦ {item}
+            </div>
+          ))}
         </div>
       </section>
 
@@ -94,14 +82,17 @@ export default function Home() {
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
               Custom Orders
             </p>
+
             <h2 className="mt-4 text-4xl font-black">
               Create Your Own Habesha Outfit
             </h2>
+
             <p className="mt-6 leading-8 text-blue-100">
               Choose your size, style, neckline, Tibeb type, inspiration image,
-              measurements, and personal details. Send everything directly to MT
-              Design through WhatsApp.
+              measurements, and personal details. Submit your custom order
+              directly to MT Design by email.
             </p>
+
             <a
               href="/custom-order"
               className="mt-8 inline-block rounded-full bg-[#f5c542] px-8 py-4 font-bold text-[#04142c]"
@@ -114,13 +105,14 @@ export default function Home() {
             <h3 className="text-2xl font-bold text-[#f5c542]">
               Custom Order Includes
             </h3>
+
             <div className="mt-6 grid gap-4">
               {[
                 "Standard size or custom measurements",
                 "Upload inspiration design image",
                 "Choose hand Tibeb or machine Tibeb",
                 "Select V-neck, low back, tube dress, cape, or traditional style",
-                "Add name, number, WhatsApp, location, and inquiry",
+                "Add name, phone number, email, location, and inquiry",
               ].map((item) => (
                 <div key={item} className="rounded-2xl bg-white/5 p-5">
                   ✦ {item}
@@ -141,8 +133,18 @@ export default function Home() {
 function MiniDress() {
   return (
     <svg viewBox="0 0 220 300" className="h-72 w-52 sm:h-96 sm:w-72">
-      <path d="M75 50 H145 L180 260 Q110 290 40 260 Z" fill="white" stroke="#cbd5e1" strokeWidth="3" />
-      <path d="M88 50 L110 95 L132 50" fill="none" stroke="#f5c542" strokeWidth="7" />
+      <path
+        d="M75 50 H145 L180 260 Q110 290 40 260 Z"
+        fill="white"
+        stroke="#cbd5e1"
+        strokeWidth="3"
+      />
+      <path
+        d="M88 50 L110 95 L132 50"
+        fill="none"
+        stroke="#f5c542"
+        strokeWidth="7"
+      />
       <rect x="104" y="90" width="12" height="130" rx="6" fill="#f5c542" />
       <rect x="65" y="145" width="90" height="12" rx="6" fill="#f5c542" />
     </svg>
@@ -157,14 +159,16 @@ function HistoryReviews() {
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
             MT Design History
           </p>
+
           <h2 className="mt-4 text-4xl font-black">
             A Family Brand Built on Craftsmanship
           </h2>
+
           <p className="mx-auto mt-6 max-w-3xl leading-8 text-blue-100">
-            MT Design began with a mission to preserve Ethiopian beauty through
-            handmade clothing. Every dress carries culture, family pride, and
-            careful Tibeb work designed for weddings, graduations, holidays, and
-            diaspora celebrations.
+            Since 1997, MT Design has preserved Ethiopian beauty through elegant
+            handcrafted clothing. Every design carries culture, family pride,
+            and careful Tibeb work made for weddings, graduations, church
+            programs, cultural celebrations, and special occasions.
           </p>
         </div>
       </section>
@@ -175,6 +179,7 @@ function HistoryReviews() {
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
               Reviews
             </p>
+
             <h2 className="mt-4 text-4xl font-black">Loved by Customers</h2>
           </div>
 
@@ -218,6 +223,7 @@ function ReviewCard({
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-7 transition hover:-translate-y-2 hover:bg-white/10">
       <p className="text-[#f5c542]">{stars}</p>
+
       <p className="mt-4 leading-7 text-blue-100">“{text}”</p>
 
       {translation && (
@@ -225,6 +231,7 @@ function ReviewCard({
           <summary className="cursor-pointer text-sm font-bold text-[#f5c542]">
             Translate to English
           </summary>
+
           <p className="mt-3 rounded-2xl bg-[#04142c] p-4 text-sm leading-6 text-blue-100">
             “{translation}”
           </p>

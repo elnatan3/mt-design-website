@@ -8,7 +8,17 @@ import { supabase } from "../lib/supabaseClient";
 const MT_EMAIL = "mtsupport@mtethiodesign.com";
 
 const standardSizes = ["XS", "S", "M", "L", "XL", "Custom"];
-const styles = ["V-Neck", "Low Back", "Tube Dress", "Round Neck", "Cape", "Modern", "Traditional"];
+const styles = [
+  "As in picture",
+  "Custom",
+  "V-Neck",
+  "Low Back",
+  "Tube Dress",
+  "Round Neck",
+  "Cape",
+  "Modern",
+  "Traditional",
+];
 const tibebTypes = ["Hand Tibeb", "Machine Tibeb", "Mixed"];
 const colors = ["Gold", "Blue", "Green", "Red", "Purple", "Black", "Custom"];
 
@@ -30,15 +40,20 @@ type OrderForm = {
   hip: string;
   shoulder: string;
   dressLength: string;
+  height: string;
+  sleeve: string;
+  neck: string;
   details: string;
   inquiry: string;
 };
 
 export default function CustomOrderPage() {
   const [size, setSize] = useState("M");
-  const [style, setStyle] = useState("V-Neck");
+  const [style, setStyle] = useState("As in picture");
   const [tibeb, setTibeb] = useState("Hand Tibeb");
   const [color, setColor] = useState("Gold");
+  const [groupOrder, setGroupOrder] = useState(false);
+  const [consultation, setConsultation] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState("");
@@ -63,48 +78,90 @@ export default function CustomOrderPage() {
     hip: "",
     shoulder: "",
     dressLength: "",
+    height: "",
+    sleeve: "",
+    neck: "",
     details: "",
     inquiry: "",
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem("mt-custom-order-draft");
+    async function loadDefaults() {
+      const saved = localStorage.getItem("mt-custom-order-draft");
 
-    if (saved) {
-      const draft = JSON.parse(saved);
-      setSize(draft.size || "M");
-      setStyle(draft.style || "V-Neck");
-      setTibeb(draft.tibeb || "Hand Tibeb");
-      setColor(draft.color || "Gold");
-      setForm(draft.form);
-      setInspiration(draft.inspiration);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        setSize(draft.size || "M");
+        setStyle(draft.style || "As in picture");
+        setTibeb(draft.tibeb || "Hand Tibeb");
+        setColor(draft.color || "Gold");
+        setGroupOrder(draft.groupOrder || false);
+        setConsultation(draft.consultation || false);
+        setForm(draft.form);
+        setInspiration(draft.inspiration);
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+
+      if (userData.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userData.user.id)
+          .single();
+
+        if (profile) {
+          setSize(profile.default_size || "M");
+          setStyle(profile.default_style || "As in picture");
+          setTibeb(profile.default_tibeb || "Hand Tibeb");
+          setColor(profile.default_color || "Gold");
+
+          setForm((prev) => ({
+            ...prev,
+            name: profile.full_name || prev.name,
+            phone: profile.phone || prev.phone,
+            email: profile.email || userData.user?.email || prev.email,
+            location: profile.location || prev.location,
+            bust: profile.measurements?.bust || prev.bust,
+            waist: profile.measurements?.waist || prev.waist,
+            hip: profile.measurements?.hip || prev.hip,
+            shoulder: profile.measurements?.shoulder || prev.shoulder,
+            dressLength: profile.measurements?.dressLength || prev.dressLength,
+            height: profile.measurements?.height || prev.height,
+            sleeve: profile.measurements?.sleeve || prev.sleeve,
+            neck: profile.measurements?.neck || prev.neck,
+            details: profile.preferences || prev.details,
+          }));
+        }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const inspirationUrl = params.get("inspirationUrl") || "";
+
+      if (inspirationUrl) {
+        const title = params.get("inspirationTitle") || "";
+        const category = params.get("inspirationCategory") || "";
+        const imageColor = params.get("inspirationColor") || "";
+
+        setInspiration({
+          id: params.get("inspirationId") || "",
+          title,
+          category,
+          color: imageColor,
+          imageUrl: inspirationUrl,
+        });
+
+        if (imageColor) setColor(imageColor);
+
+        setForm((prev) => ({
+          ...prev,
+          details: `I want to customize a design inspired by: ${title}.`,
+          inquiry: `Gallery inspiration: ${title}`,
+        }));
+      }
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const inspirationUrl = params.get("inspirationUrl") || "";
-
-    if (inspirationUrl) {
-      const title = params.get("inspirationTitle") || "";
-      const category = params.get("inspirationCategory") || "";
-      const imageColor = params.get("inspirationColor") || "";
-
-      setInspiration({
-        id: params.get("inspirationId") || "",
-        title,
-        category,
-        color: imageColor,
-        imageUrl: inspirationUrl,
-      });
-
-      if (imageColor) setColor(imageColor);
-      if (category) setStyle(category);
-
-      setForm((prev) => ({
-        ...prev,
-        details: `I want to customize a design inspired by: ${title}.`,
-        inquiry: `Gallery inspiration: ${title}`,
-      }));
-    }
+    loadDefaults();
   }, []);
 
   function updateField(field: keyof OrderForm, value: string) {
@@ -119,10 +176,19 @@ export default function CustomOrderPage() {
   function saveDraft() {
     localStorage.setItem(
       "mt-custom-order-draft",
-      JSON.stringify({ size, style, tibeb, color, form, inspiration })
+      JSON.stringify({
+        size,
+        style,
+        tibeb,
+        color,
+        groupOrder,
+        consultation,
+        form,
+        inspiration,
+      })
     );
 
-    showNotice("Draft saved successfully. You can come back anytime.");
+    showNotice("Draft saved successfully.");
   }
 
   function clearDraft() {
@@ -140,7 +206,7 @@ Hello MT Design Team,
 A customer submitted a new custom order request from the website.
 
 ━━━━━━━━━━━━━━━━━━━━
-👤 CUSTOMER INFORMATION
+CUSTOMER INFORMATION
 ━━━━━━━━━━━━━━━━━━━━
 Name: ${form.name}
 Phone: ${form.phone}
@@ -148,51 +214,51 @@ Email: ${form.email}
 Location: ${form.location}
 
 ━━━━━━━━━━━━━━━━━━━━
-👗 DESIGN SELECTION
+DESIGN SELECTION
 ━━━━━━━━━━━━━━━━━━━━
 Size: ${size}
 Style: ${style}
 Tibeb Type: ${tibeb}
 Color: ${color}
+Group Order: ${groupOrder ? "Yes" : "No"}
+Consultation Requested: ${consultation ? "Yes" : "No"}
 
 ━━━━━━━━━━━━━━━━━━━━
-📏 CUSTOM MEASUREMENTS — OPTIONAL, IN CM
+CUSTOM MEASUREMENTS — OPTIONAL, IN CM
 ━━━━━━━━━━━━━━━━━━━━
 Bust: ${form.bust || "Not provided"}
 Waist: ${form.waist || "Not provided"}
 Hip: ${form.hip || "Not provided"}
 Shoulder: ${form.shoulder || "Not provided"}
 Dress Length: ${form.dressLength || "Not provided"}
+Height: ${form.height || "Not provided"}
+Sleeve: ${form.sleeve || "Not provided"}
+Neck: ${form.neck || "Not provided"}
 
 ━━━━━━━━━━━━━━━━━━━━
-🧵 DESIGN DETAILS
+DESIGN DETAILS
 ━━━━━━━━━━━━━━━━━━━━
 ${form.details || "No extra design details provided."}
 
 ━━━━━━━━━━━━━━━━━━━━
-💬 CUSTOMER INQUIRY
+CUSTOMER INQUIRY
 ━━━━━━━━━━━━━━━━━━━━
 ${form.inquiry || "No inquiry provided."}
 
 ━━━━━━━━━━━━━━━━━━━━
-🖼️ INSPIRATION IMAGE
+INSPIRATION IMAGE
 ━━━━━━━━━━━━━━━━━━━━
 ${inspirationUrl || "No inspiration image provided."}
 
 Gallery Inspiration:
 ${inspiration.title || "None"}
 
-━━━━━━━━━━━━━━━━━━━━
-✅ ADMIN NOTE
-━━━━━━━━━━━━━━━━━━━━
-This order has also been saved inside the MT Design admin dashboard.
-
 Thank you,
 MT Design Website`;
   }
 
   function openGmail(inspirationUrl: string) {
-    const subject = `✨ New MT Design Custom Order - ${form.name || "Customer"}`;
+    const subject = `New MT Design Custom Order - ${form.name || "Customer"}`;
     const body = buildEmailBody(inspirationUrl);
 
     const gmailUrl =
@@ -208,12 +274,16 @@ MT Design Website`;
     e.preventDefault();
     setSubmitting(true);
 
+    const { data: authData } = await supabase.auth.getUser();
+
     let inspirationUrl = inspiration.imageUrl;
 
     if (file) {
       const path = `orders/${Date.now()}-${file.name}`;
 
-      const { error } = await supabase.storage.from("mt-images").upload(path, file);
+      const { error } = await supabase.storage
+        .from("mt-images")
+        .upload(path, file);
 
       if (error) {
         alert(error.message);
@@ -226,6 +296,7 @@ MT Design Website`;
     }
 
     const { error } = await supabase.from("custom_orders").insert({
+      user_id: authData.user?.id || null,
       name: form.name,
       phone: form.phone,
       email: form.email,
@@ -234,12 +305,17 @@ MT Design Website`;
       style,
       tibeb,
       color,
+      group_order: groupOrder,
+      consultation_requested: consultation,
       measurements: {
         bust: form.bust || "",
         waist: form.waist || "",
         hip: form.hip || "",
         shoulder: form.shoulder || "",
         dressLength: form.dressLength || "",
+        height: form.height || "",
+        sleeve: form.sleeve || "",
+        neck: form.neck || "",
         unit: "cm",
       },
       details: form.details,
@@ -268,42 +344,56 @@ MT Design Website`;
           <h1 className="text-4xl font-black sm:text-6xl">Custom Order</h1>
 
           <p className="mt-4 max-w-2xl text-blue-100">
-            Choose a gallery design or upload your own inspiration image. Your
-            order will be saved and opened in Gmail as a professional email to
-            MT Design.
+            Choose a gallery design or upload your own inspiration image. If you
+            are logged in, your saved profile details will automatically prefill.
           </p>
 
           {notice && (
-            <div className="mt-6 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-sm font-bold text-green-300 shadow-lg">
+            <div className="mt-6 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-sm font-bold text-green-300">
               ✅ {notice}
             </div>
           )}
 
-          <div className="mt-8 rounded-3xl border border-[#f5c542]/40 bg-white/5 p-5">
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
-              Start With Inspiration
-            </p>
-
-            <h2 className="mt-3 text-2xl font-black">
-              Choose from gallery or upload your own
-            </h2>
-
-            <p className="mt-3 leading-7 text-blue-100">
-              If you upload your own image, it will replace the gallery
-              inspiration in the preview and final order.
-            </p>
-
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
             <a
               href="/gallery"
-              className="mt-5 inline-block rounded-full bg-[#f5c542] px-6 py-3 font-bold text-[#04142c]"
+              className="rounded-3xl border border-[#f5c542]/40 bg-white/5 p-6 transition hover:-translate-y-1 hover:border-[#f5c542]"
             >
-              Browse Gallery for Inspiration
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
+                Browse Gallery
+              </p>
+              <h2 className="mt-3 text-2xl font-black">
+                Choose MT Design Inspiration
+              </h2>
+              <p className="mt-3 text-blue-100">
+                Pick from our gallery and return with the selected design.
+              </p>
             </a>
+
+            <div className="rounded-3xl border border-[#f5c542]/40 bg-white/5 p-6">
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#f5c542]">
+                Use Your Own Image
+              </p>
+              <h2 className="mt-3 text-2xl font-black">Upload Inspiration</h2>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const selected = e.target.files?.[0] || null;
+                  setFile(selected);
+                  setFilePreview(selected ? URL.createObjectURL(selected) : "");
+                }}
+                className="mt-5 w-full rounded-2xl border border-white/20 bg-white/10 p-4 text-sm"
+              />
+            </div>
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[0.9fr_1.1fr]">
             <section className="rounded-3xl border border-[#f5c542]/40 bg-white/5 p-5 sm:p-6">
-              <h2 className="text-2xl font-bold text-[#f5c542]">Design Preview</h2>
+              <h2 className="text-2xl font-bold text-[#f5c542]">
+                Design Preview
+              </h2>
 
               <div className="mt-6 flex min-h-[360px] items-center justify-center rounded-3xl bg-[#d9d0bf] p-4 text-[#04142c] sm:min-h-[500px]">
                 {activePreviewImage ? (
@@ -334,47 +424,19 @@ MT Design Website`;
             </section>
 
             <section className="rounded-3xl border border-[#f5c542]/40 bg-white/5 p-5 sm:p-6">
-              <h2 className="text-2xl font-bold text-[#f5c542]">Order Details</h2>
+              <h2 className="text-2xl font-bold text-[#f5c542]">
+                Order Details
+              </h2>
 
               <OptionGroup title="Choose Size" items={standardSizes} value={size} setValue={setSize} />
+
+              <p className="mt-3 text-sm text-blue-100 underline">
+                Size Guide Coming Soon
+              </p>
+
               <OptionGroup title="Choose Style" items={styles} value={style} setValue={setStyle} />
               <OptionGroup title="Tibeb Type" items={tibebTypes} value={tibeb} setValue={setTibeb} />
               <OptionGroup title="Color" items={colors} value={color} setValue={setColor} />
-
-              <div className="mt-8">
-                <h3 className="mb-4 font-bold uppercase tracking-wider text-[#f5c542]">
-                  Upload Your Own Inspiration Image
-                </h3>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    const selected = e.target.files?.[0] || null;
-                    setFile(selected);
-
-                    if (selected) {
-                      setFilePreview(URL.createObjectURL(selected));
-                    } else {
-                      setFilePreview("");
-                    }
-                  }}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 p-4 text-sm"
-                />
-
-                {filePreview && (
-                  <div className="mt-5 rounded-2xl border border-[#f5c542]/40 bg-[#08254f] p-4">
-                    <p className="mb-3 font-bold text-[#f5c542]">
-                      Uploaded Inspiration Preview
-                    </p>
-                    <img
-                      src={filePreview}
-                      alt="Uploaded inspiration"
-                      className="max-h-[420px] w-full rounded-xl object-contain"
-                    />
-                  </div>
-                )}
-              </div>
 
               <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input label="Name" value={form.name} onChange={(v: string) => updateField("name", v)} />
@@ -385,12 +447,9 @@ MT Design Website`;
 
               <div className="mt-8">
                 <h3 className="mb-2 font-bold uppercase tracking-wider text-[#f5c542]">
-                  Custom Measurements <span className="text-blue-100">(Optional)</span>
+                  Custom Measurements{" "}
+                  <span className="text-blue-100">(Optional, cm)</span>
                 </h3>
-
-                <p className="mb-4 text-sm text-blue-100">
-                  Measurements are optional. If you know them, enter them in centimeters (cm).
-                </p>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Input label="Bust (cm) - Optional" value={form.bust} onChange={(v: string) => updateField("bust", v)} />
@@ -398,7 +457,36 @@ MT Design Website`;
                   <Input label="Hip (cm) - Optional" value={form.hip} onChange={(v: string) => updateField("hip", v)} />
                   <Input label="Shoulder (cm) - Optional" value={form.shoulder} onChange={(v: string) => updateField("shoulder", v)} />
                   <Input label="Dress Length (cm) - Optional" value={form.dressLength} onChange={(v: string) => updateField("dressLength", v)} />
+                  <Input label="Height (cm) - Optional" value={form.height} onChange={(v: string) => updateField("height", v)} />
+                  <Input label="Sleeve (cm) - Optional" value={form.sleeve} onChange={(v: string) => updateField("sleeve", v)} />
+                  <Input label="Neck (cm) - Optional" value={form.neck} onChange={(v: string) => updateField("neck", v)} />
                 </div>
+              </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                <label className="rounded-2xl bg-white/5 p-4 font-bold text-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={groupOrder}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setGroupOrder(e.target.checked)
+                    }
+                    className="mr-2"
+                  />
+                  Group Order
+                </label>
+
+                <label className="rounded-2xl bg-white/5 p-4 font-bold text-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={consultation}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setConsultation(e.target.checked)
+                    }
+                    className="mr-2"
+                  />
+                  Request Consultation
+                </label>
               </div>
 
               <TextArea
@@ -502,7 +590,9 @@ function Input({
       </span>
       <input
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange(e.target.value)
+        }
         className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-[#04142c] outline-none"
       />
     </label>
@@ -527,7 +617,9 @@ function TextArea({
       </span>
       <textarea
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+          onChange(e.target.value)
+        }
         placeholder={placeholder}
         rows={5}
         className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-[#04142c] outline-none"
