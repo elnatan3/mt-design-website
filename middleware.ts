@@ -10,14 +10,11 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/dev-access") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/admin") ||
+    pathname.startsWith("/admin/login") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon");
 
-  if (allowedPaths) {
-    return NextResponse.next();
-  }
+  if (allowedPaths) return NextResponse.next();
 
   if (!hasDevAccess) {
     return NextResponse.redirect(new URL("/coming-soon", request.url));

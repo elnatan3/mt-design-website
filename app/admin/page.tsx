@@ -42,15 +42,19 @@ export default function AdminPage() {
       window.location.href = "/login";
       return;
     }
-  
+    
     const email = data.user.email?.toLowerCase().trim() || "";
-  
-    const adminEmails = [
-      "elnatantesfa21@gmail.com",
-    ];
-  
-    const isAdmin = adminEmails.includes(email);
-  
+
+    const adminEmails =
+      process.env.NEXT_PUBLIC_ADMIN_EMAILS?.toLowerCase()
+        .split(",")
+        .map((e) => e.trim()) || [];
+    
+    const hardcodedAdmins = ["elnatantesfa21@gmail.com"];
+    
+    const isAdmin =
+      adminEmails.includes(email) || hardcodedAdmins.includes(email);
+    
     if (!isAdmin) {
       window.location.href = "/dashboard";
       return;
